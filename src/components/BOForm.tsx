@@ -44,6 +44,7 @@ interface FormData {
   unidade: string;
   prefixo: string;
   data: string;
+  localOcorrencia: string;
   encarregado: string;
   motorista: string;
   terceiroHomem: string;
@@ -61,6 +62,7 @@ const BOForm = () => {
     unidade: "",
     prefixo: "",
     data: new Date().toLocaleDateString("pt-BR"),
+    localOcorrencia: "",
     encarregado: "",
     motorista: "",
     terceiroHomem: "",
@@ -78,6 +80,7 @@ const BOForm = () => {
   const [selectedCategoria, setSelectedCategoria] = useState<string>("all");
   const [selectedGrupo, setSelectedGrupo] = useState<string>("all");
   const [copied, setCopied] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Filtrar naturezas
   const filteredNaturezas = useMemo(() => {
@@ -181,15 +184,73 @@ const BOForm = () => {
     });
   };
 
-  const generateTemplate = () => {
-    const template = `No dia ${formData.data.slice(0, 5)}, por volta das XX:XX horas, a equipe policial em serviço foi acionada via COPOM para atendimento de ocorrência de...
+  const generateReportAI = async () => {
+    const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
-Ao chegarem ao local, os policiais visualizaram...
+    console.log("--- DEBUG START ---");
+    console.log("Webhook URL from .env:", webhookUrl);
 
-Diante dos fatos, restou configurada, em tese, a prática dos crimes previstos... motivo pelo qual foi dada voz de prisão...`;
+    if (!webhookUrl || webhookUrl.includes("replace-me")) {
+      console.error("Webhook URL inválida!");
+      toast.error("URL do Webhook n8n não configurada no .env");
+      return;
+    }
 
-    handleInputChange("ocorrencia", template);
-    toast.success("Modelo de ocorrência gerado!");
+    try {
+      setIsGenerating(true);
+      toast.info("Gerando relatório com IA...");
+
+      const payload = {
+        ...formData,
+        naturezaDetalhada: formData.naturezaFatos.map(cod => {
+          const nat = naturezaOcorrencias.find(n => n.codigo === cod);
+          return nat ? `${cod} - ${nat.descricao}` : cod;
+        }),
+        artigosDetalhados: formData.artigosDelitos.map(art => {
+          const a = codigoPenal.find(cp => cp.artigo === art);
+          return a ? `Art. ${a.artigo} - ${a.tipificacao}` : art;
+        })
+      };
+
+      console.log("Payload enviado:", JSON.stringify(payload, null, 2));
+
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      console.log("Response Status:", response.status);
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Erro na resposta:", text);
+        throw new Error("Falha na comunicação com n8n");
+      }
+
+      const data = await response.json();
+      console.log("Dados recebidos:", data);
+
+      // Assumindo que o n8n retorna { "text": "..." } ou { "output": "..." }
+      const generatedText = data.text || data.output || data.message;
+
+      if (generatedText) {
+        handleInputChange("ocorrencia", generatedText);
+        toast.success("Relatório gerado com sucesso!");
+      } else {
+        console.error("Texto não encontrado na resposta. Chaves disponíveis:", Object.keys(data));
+        throw new Error("Formato de resposta inválido");
+      }
+
+    } catch (error) {
+      console.error("Erro no catch:", error);
+      toast.error("Erro ao gerar relatório");
+    } finally {
+      setIsGenerating(false);
+      console.log("--- DEBUG END ---");
+    }
   }
 
   const formatNumber = (num: number): string => {
@@ -340,6 +401,15 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
                       className="input-pro text-center"
                     />
                   </div>
+                  <div className="space-y-1.5 md:col-span-3">
+                    <Label className="text-xs font-bold text-muted-foreground uppercase">Local da Ocorrência</Label>
+                    <Input
+                      value={formData.localOcorrencia}
+                      onChange={(e) => handleInputChange("localOcorrencia", e.target.value)}
+                      placeholder="Endereço completo"
+                      className="input-pro"
+                    />
+                  </div>
                 </CardContent>
               </Card>
 
@@ -482,8 +552,15 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
                       <FileText className="w-4 h-4 text-primary" />
                       <h3 className="text-sm font-bold uppercase text-muted-foreground">Histórico da Ocorrência</h3>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={generateTemplate} className="h-6 text-xs text-primary hover:text-primary/80">
-                      <Wand2 className="w-3 h-3 mr-1" /> Gerar Modelo
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={generateReportAI}
+                      disabled={isGenerating}
+                      className="h-6 text-xs text-primary hover:text-primary/80"
+                    >
+                      <Wand2 className={`w-3 h-3 mr-1 ${isGenerating ? 'animate-spin' : ''}`} />
+                      {isGenerating ? "Gerando..." : "Gerar Modelo IA"}
                     </Button>
                   </div>
                   <Textarea

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,27 +8,30 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
-import { 
-  Copy, 
-  Shield, 
-  FileText, 
-  Users, 
-  AlertTriangle, 
-  Scale, 
+import {
+  Copy,
+  Shield,
+  FileText,
+  Users,
+  AlertTriangle,
+  Scale,
   Package,
   CheckCircle2,
-  Search
+  Search,
+  Gavel,
+  Siren
 } from "lucide-react";
 import { toast } from "sonner";
-import { codigoPenal, categoriasPenais, type Artigo } from "@/data/codigoPenal";
+import { codigoPenal, categoriasPenais } from "@/data/codigoPenal";
 import { naturezaOcorrencias, gruposNatureza, type NaturezaItem } from "@/data/naturezaOcorrencia";
+import { Footer } from "./Footer";
 
 interface Suspeito {
   nome: string;
@@ -78,7 +81,7 @@ const BOForm = () => {
   // Filtrar naturezas
   const filteredNaturezas = useMemo(() => {
     return naturezaOcorrencias.filter((n) => {
-      const matchSearch = 
+      const matchSearch =
         n.codigo.toLowerCase().includes(naturezaSearch.toLowerCase()) ||
         n.descricao.toLowerCase().includes(naturezaSearch.toLowerCase());
       const matchGrupo = selectedGrupo === "all" || n.grupo === selectedGrupo;
@@ -89,7 +92,7 @@ const BOForm = () => {
   // Filtrar artigos
   const filteredArtigos = useMemo(() => {
     return codigoPenal.filter((a) => {
-      const matchSearch = 
+      const matchSearch =
         a.artigo.toLowerCase().includes(artigoSearch.toLowerCase()) ||
         a.tipificacao.toLowerCase().includes(artigoSearch.toLowerCase());
       const matchCategoria = selectedCategoria === "all" || a.categoria === selectedCategoria;
@@ -101,18 +104,28 @@ const BOForm = () => {
   const totais = useMemo(() => {
     let penaTotal = 0;
     let multaTotal = 0;
+    let fiancaTotal = 0;
+    let semFianca = false;
 
     formData.artigosDelitos.forEach((artigoId) => {
       const artigo = codigoPenal.find((a) => a.artigo === artigoId);
       if (artigo) {
         const pena = parseInt(artigo.pena) || 0;
         const multa = parseFloat(artigo.multa.replace(".", "")) || 0;
+
         penaTotal += pena;
         multaTotal += multa;
+
+        if (artigo.fiancavel) {
+          const fianca = parseFloat(artigo.fiancavel.replace(".", "")) || 0;
+          fiancaTotal += fianca;
+        } else {
+          semFianca = true;
+        }
       }
     });
 
-    return { penaTotal, multaTotal };
+    return { penaTotal, multaTotal, fiancaTotal, semFianca };
   }, [formData.artigosDelitos]);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -156,7 +169,7 @@ const BOForm = () => {
   };
 
   const formatNumber = (num: number): string => {
-    return num.toLocaleString("pt-BR");
+    return num.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
   };
 
   const generateBO = (): string => {
@@ -202,7 +215,8 @@ OCORRÊNCIA: ${formData.ocorrencia || "N/A"}
 ---
 RESUMO PENAL:
 TEMPO TOTAL DE PENA: ${totais.penaTotal} MESES
-MULTA TOTAL: R$ ${formatNumber(totais.multaTotal)}`;
+MULTA TOTAL: R$ ${formatNumber(totais.multaTotal)}
+FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumber(totais.fiancaTotal)}`}`;
 
     return bo;
   };
@@ -212,14 +226,10 @@ MULTA TOTAL: R$ ${formatNumber(totais.multaTotal)}`;
     try {
       await navigator.clipboard.writeText(bo);
       setCopied(true);
-      toast.success("BO copiado para a área de transferência!", {
-        description: "Cole no tablet do jogo para registrar a ocorrência.",
-      });
+      toast.success("BO copiado com sucesso!");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      toast.error("Erro ao copiar", {
-        description: "Tente novamente ou copie manualmente.",
-      });
+      toast.error("Erro ao copiar");
     }
   };
 
@@ -228,502 +238,358 @@ MULTA TOTAL: R$ ${formatNumber(totais.multaTotal)}`;
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-background">
-      {/* PM-SP Header Stripe */}
-      <div className="pm-stripe w-full fixed top-0 left-0 z-50" />
-      
-      <div className="max-w-7xl mx-auto space-y-6 pt-4">
-        {/* Header */}
-        <div className="text-center space-y-4 animate-slide-in">
-          <div className="inline-flex items-center gap-3 pm-badge px-6 py-3 rounded-lg">
-            <Shield className="w-8 h-8 text-primary-foreground" />
-            <h1 className="text-2xl md:text-3xl font-display font-bold text-primary-foreground tracking-wide">
-              BOLETIM DE OCORRÊNCIA PM
-            </h1>
-          </div>
-          <p className="text-muted-foreground font-medium">
-            SAMPA Roleplay • Sistema de Registro de Ocorrências
-          </p>
+    <div className="min-h-screen bg-background pb-12">
+      {/* Top Decoration Line */}
+      <div className="h-1 w-full bg-gradient-to-r from-red-700 via-red-600 to-red-700" />
+
+      {/* Header */}
+      <header className="bg-card border-b border-border/40 py-6 mb-8 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+          <Shield className="w-64 h-64" />
         </div>
+        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center md:justify-between gap-6 relative z-10">
+          <div className="flex items-center gap-4">
+            <img
+              src="/pmesp-logo.png"
+              alt="Brasão PMESP"
+              className="w-16 h-16 md:w-20 md:h-20 object-contain drop-shadow-lg"
+            />
+            <div className="flex flex-col">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground uppercase">
+                Calculadora Penal
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground font-medium border-l-2 border-primary pl-2 uppercase tracking-widest">
+                Polícia Militar do Estado de São Paulo
+              </p>
+            </div>
+          </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Left Column - Form */}
-          <div className="space-y-6">
-            {/* Identificação da Viatura */}
-            <Card className="glass-card p-6 space-y-4">
-              <div className="flex items-center gap-2 text-primary">
-                <FileText className="w-5 h-5" />
-                <h2 className="text-lg font-display font-semibold">IDENTIFICAÇÃO</h2>
-              </div>
-              <Separator className="bg-border/50" />
-              
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-sm">UNIDADE</Label>
-                  <Input
-                    value={formData.unidade}
-                    onChange={(e) => handleInputChange("unidade", e.target.value)}
-                    placeholder="COE"
-                    className="input-police"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-sm">PREFIXO</Label>
-                  <Input
-                    value={formData.prefixo}
-                    onChange={(e) => handleInputChange("prefixo", e.target.value)}
-                    placeholder="94100"
-                    className="input-police"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-sm">DATA</Label>
-                  <Input
-                    value={formData.data}
-                    onChange={(e) => handleInputChange("data", e.target.value)}
-                    placeholder="00/00/2025"
-                    className="input-police"
-                  />
-                </div>
-              </div>
-            </Card>
+          <div className="flex items-center gap-3 bg-secondary/50 px-4 py-2 rounded-full border border-primary/20">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sistema Integrado e Online</span>
+          </div>
+        </div>
+      </header>
 
-            {/* Guarnição */}
-            <Card className="glass-card p-6 space-y-4">
-              <div className="flex items-center gap-2 text-primary">
-                <Users className="w-5 h-5" />
-                <h2 className="text-lg font-display font-semibold">GUARNIÇÃO</h2>
-              </div>
-              <Separator className="bg-border/50" />
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-sm">ENCARREGADO</Label>
-                  <Input
-                    value={formData.encarregado}
-                    onChange={(e) => handleInputChange("encarregado", e.target.value)}
-                    placeholder="MAJ. NOME SOBRENOME"
-                    className="input-police"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-sm">MOTORISTA</Label>
-                  <Input
-                    value={formData.motorista}
-                    onChange={(e) => handleInputChange("motorista", e.target.value)}
-                    placeholder="SUB-TEN. NOME SOBRENOME"
-                    className="input-police"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-sm">TERCEIRO HOMEM</Label>
-                  <Input
-                    value={formData.terceiroHomem}
-                    onChange={(e) => handleInputChange("terceiroHomem", e.target.value)}
-                    placeholder="1ºTEN. NOME SOBRENOME"
-                    className="input-police"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-sm">QUARTO HOMEM</Label>
-                  <Input
-                    value={formData.quartoHomem}
-                    onChange={(e) => handleInputChange("quartoHomem", e.target.value)}
-                    placeholder="2º SGT. NOME SOBRENOME"
-                    className="input-police"
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label className="text-muted-foreground text-sm">QUINTO HOMEM</Label>
-                  <Input
-                    value={formData.quintoHomem}
-                    onChange={(e) => handleInputChange("quintoHomem", e.target.value)}
-                    placeholder="N/A ou PATENTE + NOME"
-                    className="input-police"
-                  />
-                </div>
-              </div>
-            </Card>
+      <main className="container mx-auto px-4 space-y-8">
+        <div className="grid lg:grid-cols-12 gap-8">
 
-            {/* Suspeitos */}
-            <Card className="glass-card p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-primary">
-                  <AlertTriangle className="w-5 h-5" />
-                  <h2 className="text-lg font-display font-semibold">SUSPEITO(S)</h2>
+          {/* LEFT COLUMN - FORM DATA (7 cols) */}
+          <div className="lg:col-span-7 space-y-8">
+
+            {/* 1. Identification Section */}
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Siren className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-bold uppercase tracking-wide">Dados da Ocorrência</h2>
+              </div>
+
+              <Card className="glass-panel border-l-4 border-l-primary/60">
+                <CardContent className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-muted-foreground uppercase">Unidade</Label>
+                    <Input
+                      value={formData.unidade}
+                      onChange={(e) => handleInputChange("unidade", e.target.value)}
+                      placeholder="Ex: COE, ROCAM"
+                      className="input-pro font-semibold"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-muted-foreground uppercase">Prefixo Viatura</Label>
+                    <Input
+                      value={formData.prefixo}
+                      onChange={(e) => handleInputChange("prefixo", e.target.value)}
+                      placeholder="Ex: 12345"
+                      className="input-pro font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-muted-foreground uppercase">Data</Label>
+                    <Input
+                      value={formData.data}
+                      onChange={(e) => handleInputChange("data", e.target.value)}
+                      className="input-pro text-center"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-panel">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <Users className="w-4 h-4 text-muted-foreground" /> Guarnição Policial
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 pt-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Encarregado</Label>
+                    <Input
+                      value={formData.encarregado}
+                      onChange={(e) => handleInputChange("encarregado", e.target.value)}
+                      placeholder="Nome e Patente"
+                      className="input-pro"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Motorista</Label>
+                    <Input
+                      value={formData.motorista}
+                      onChange={(e) => handleInputChange("motorista", e.target.value)}
+                      className="input-pro"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">3º Homem</Label>
+                    <Input
+                      value={formData.terceiroHomem}
+                      onChange={(e) => handleInputChange("terceiroHomem", e.target.value)}
+                      className="input-pro"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">4º Homem</Label>
+                    <Input
+                      value={formData.quartoHomem}
+                      onChange={(e) => handleInputChange("quartoHomem", e.target.value)}
+                      className="input-pro"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* 2. Suspects Section */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-bold uppercase tracking-wide">Envolvidos</h2>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={addSuspeito}
-                  className="border-primary/50 text-primary hover:bg-primary/10"
-                >
-                  + Adicionar
+                <Button variant="outline" size="sm" onClick={addSuspeito} className="h-8 border-dashed border-muted-foreground/40 hover:border-primary hover:text-primary">
+                  + Adicionar Suspeito
                 </Button>
               </div>
-              <Separator className="bg-border/50" />
-              
+
               <div className="space-y-4">
                 {formData.suspeitos.map((suspeito, index) => (
-                  <div key={index} className="p-4 rounded-lg bg-secondary/30 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="badge-military">Suspeito {index + 1}</span>
-                      {formData.suspeitos.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeSuspeito(index)}
-                          className="text-destructive hover:text-destructive/80 h-8"
-                        >
-                          Remover
-                        </Button>
+                  <Card key={index} className="glass-panel relative overflow-hidden group">
+                    {/* Remove Button Absolute */}
+                    {formData.suspeitos.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeSuspeito(index)}
+                        className="absolute top-2 right-2 h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <span className="sr-only">Remover</span>
+                        ×
+                      </Button>
+                    )}
+
+                    <CardContent className="p-6 grid gap-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Suspeito #{index + 1}</Badge>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold text-muted-foreground">Nome Completo</Label>
+                          <Input
+                            value={suspeito.nome}
+                            onChange={(e) => handleSuspeitoChange(index, "nome", e.target.value)}
+                            placeholder="NOME SOBRENOME"
+                            className="input-pro uppercase"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold text-muted-foreground">RG</Label>
+                          <Input
+                            value={suspeito.rg}
+                            onChange={(e) => handleSuspeitoChange(index, "rg", e.target.value)}
+                            className="input-pro uppercase"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-muted-foreground">Características Físicas / Vestimentas</Label>
+                        <Input
+                          value={suspeito.caracteristicas}
+                          onChange={(e) => handleSuspeitoChange(index, "caracteristicas", e.target.value)}
+                          placeholder="Descreva brevemente..."
+                          className="input-pro"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+
+            {/* 3. Text Areas */}
+            <section className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-primary" />
+                    <h3 className="text-sm font-bold uppercase text-muted-foreground">Apreensão</h3>
+                  </div>
+                  <Textarea
+                    value={formData.apreensao}
+                    onChange={(e) => handleInputChange("apreensao", e.target.value)}
+                    placeholder="Liste itens ilícitos, armas, drogas..."
+                    className="input-pro min-h-[120px] resize-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    <h3 className="text-sm font-bold uppercase text-muted-foreground">Histórico</h3>
+                  </div>
+                  <Textarea
+                    value={formData.ocorrencia}
+                    onChange={(e) => handleInputChange("ocorrencia", e.target.value)}
+                    placeholder="Descrição detalhada dos fatos..."
+                    className="input-pro min-h-[120px] resize-none"
+                  />
+                </div>
+              </div>
+            </section>
+
+          </div>
+
+          {/* RIGHT COLUMN - PENAL CALCULATOR (5 cols) */}
+          <div className="lg:col-span-5 space-y-6">
+
+            {/* STICKY CALCULATOR SUMMARY */}
+            <div className="sticky top-6 z-20 space-y-6">
+              <Card className="glass-panel border-primary/50 shadow-[0_0_30px_rgba(220,38,38,0.1)]">
+                <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent border-b border-primary/10 pb-4">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2 text-primary">
+                    <Gavel className="w-5 h-5" /> Calculadora Penal
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <span className="text-xs font-bold text-muted-foreground uppercase">Tempo de Pena</span>
+                      <div className="text-3xl font-black text-foreground">{totais.penaTotal} <span className="text-sm font-medium text-muted-foreground">meses</span></div>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-xs font-bold text-muted-foreground uppercase">Multa Total</span>
+                      <div className="text-2xl font-bold text-foreground">R$ {formatNumber(totais.multaTotal)}</div>
+                    </div>
+                  </div>
+
+                  <div className={`p-4 rounded-md border ${totais.semFianca ? 'bg-destructive/10 border-destructive/20' : 'bg-secondary/50 border-border'}`}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-bold uppercase text-muted-foreground">Fiança</span>
+                      {totais.semFianca ? (
+                        <Badge variant="destructive" className="font-bold">INFIANÇÁVEL</Badge>
+                      ) : (
+                        <span className="text-xl font-bold text-foreground">R$ {formatNumber(totais.fiancaTotal)}</span>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label className="text-muted-foreground text-xs">NOME</Label>
-                        <Input
-                          value={suspeito.nome}
-                          onChange={(e) => handleSuspeitoChange(index, "nome", e.target.value)}
-                          placeholder="Nome completo"
-                          className="input-police"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-muted-foreground text-xs">RG</Label>
-                        <Input
-                          value={suspeito.rg}
-                          onChange={(e) => handleSuspeitoChange(index, "rg", e.target.value)}
-                          placeholder="1234"
-                          className="input-police"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-muted-foreground text-xs">CARACTERÍSTICAS</Label>
+                  </div>
+
+                  <Separator className="bg-border/50" />
+
+                  <Button
+                    className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25 transition-all active:scale-[0.98]"
+                    onClick={copyToClipboard}
+                  >
+                    {copied ? (
+                      <span className="flex items-center gap-2 animate-in fade-in zoom-in"><CheckCircle2 className="w-5 h-5" /> COPIADO</span>
+                    ) : (
+                      <span className="flex items-center gap-2"><Copy className="w-5 h-5" /> COPIAR RELATÓRIO</span>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* SEARCH AND SELECT */}
+              <Card className="glass-panel max-h-[600px] flex flex-col">
+                <div className="p-4 border-b border-border/40 space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-muted-foreground">NATUREZA DA OCORRÊNCIA</Label>
+                    <Select value={formData.naturezaFatos} onValueChange={(val) => handleInputChange("naturezaFatos", val)}>
+                      <SelectTrigger className="w-full input-pro">
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <div className="p-2">
+                          <Input
+                            placeholder="Filtrar..."
+                            value={naturezaSearch}
+                            onChange={(e) => setNaturezaSearch(e.target.value)}
+                            className="h-8 mb-2"
+                            autoFocus
+                          />
+                        </div>
+                        <ScrollArea className="h-[200px]">
+                          {filteredNaturezas.map((nat) => (
+                            <SelectItem key={nat.codigo} value={nat.codigo}>
+                              <span className="font-mono font-bold text-xs mr-2 text-primary">{nat.codigo}</span>
+                              {nat.descricao}
+                            </SelectItem>
+                          ))}
+                        </ScrollArea>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-muted-foreground">ADICIONAR ARTIGOS</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
-                        value={suspeito.caracteristicas}
-                        onChange={(e) => handleSuspeitoChange(index, "caracteristicas", e.target.value)}
-                        placeholder="Homem, branco, cabelo azul, tatuagens..."
-                        className="input-police"
+                        className="pl-9 input-pro"
+                        placeholder="Pesquisar crime (ex: Homicídio, Roubo)..."
+                        value={artigoSearch}
+                        onChange={(e) => setArtigoSearch(e.target.value)}
                       />
                     </div>
                   </div>
-                ))}
-              </div>
-            </Card>
-
-            {/* Apreensão e Ocorrência */}
-            <Card className="glass-card p-6 space-y-4">
-              <div className="flex items-center gap-2 text-primary">
-                <Package className="w-5 h-5" />
-                <h2 className="text-lg font-display font-semibold">APREENSÃO</h2>
-              </div>
-              <Separator className="bg-border/50" />
-              
-              <div className="space-y-2">
-                <Label className="text-muted-foreground text-sm">ITENS APREENDIDOS</Label>
-                <Textarea
-                  value={formData.apreensao}
-                  onChange={(e) => handleInputChange("apreensao", e.target.value)}
-                  placeholder="1x FIVESEVEN / 200x MUNIÇÕES FIVESEVEN / 234.442x DINHEIRO SUJO"
-                  className="input-police min-h-[80px]"
-                />
-              </div>
-            </Card>
-
-            {/* Descrição da Ocorrência */}
-            <Card className="glass-card p-6 space-y-4">
-              <div className="flex items-center gap-2 text-primary">
-                <FileText className="w-5 h-5" />
-                <h2 className="text-lg font-display font-semibold">OCORRÊNCIA</h2>
-              </div>
-              <Separator className="bg-border/50" />
-              
-              <div className="space-y-2">
-                <Label className="text-muted-foreground text-sm">DESCRIÇÃO DOS FATOS</Label>
-                <Textarea
-                  value={formData.ocorrencia}
-                  onChange={(e) => handleInputChange("ocorrencia", e.target.value)}
-                  placeholder="No dia XX/XX, por volta das XX:XX horas, a equipe policial em serviço foi acionada..."
-                  className="input-police min-h-[200px]"
-                />
-              </div>
-            </Card>
-          </div>
-
-          {/* Right Column - Natureza e Artigos */}
-          <div className="space-y-6">
-            {/* Natureza dos Fatos */}
-            <Card className="glass-card p-6 space-y-4">
-              <div className="flex items-center gap-2 text-primary">
-                <Scale className="w-5 h-5" />
-                <h2 className="text-lg font-display font-semibold">NATUREZA DOS FATOS</h2>
-              </div>
-              <Separator className="bg-border/50" />
-              
-              {formData.naturezaFatos && (
-                <div className="p-3 rounded-lg bg-success/10 border border-success/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-success" />
-                      <span className="text-success font-semibold">{formData.naturezaFatos}</span>
-                      <span className="text-muted-foreground text-sm">
-                        - {getNaturezaInfo(formData.naturezaFatos)?.descricao}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleInputChange("naturezaFatos", "")}
-                      className="text-destructive hover:text-destructive/80 hover:bg-destructive/10 h-7 px-2"
-                    >
-                      ✕ Remover
-                    </Button>
-                  </div>
                 </div>
-              )}
 
-              <div className="space-y-3">
-                <Select value={selectedGrupo} onValueChange={setSelectedGrupo}>
-                  <SelectTrigger className="input-police">
-                    <SelectValue placeholder="Filtrar por grupo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os grupos</SelectItem>
-                    {gruposNatureza.map((grupo) => (
-                      <SelectItem key={grupo} value={grupo}>
-                        {grupo}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    value={naturezaSearch}
-                    onChange={(e) => setNaturezaSearch(e.target.value)}
-                    placeholder="Buscar código ou descrição..."
-                    className="input-police pl-10"
-                  />
-                </div>
-              </div>
-
-              <ScrollArea className="h-[200px] pr-4">
-                <div className="space-y-1">
-                  {filteredNaturezas.map((natureza) => (
-                    <div
-                      key={natureza.codigo}
-                      onClick={() => handleInputChange("naturezaFatos", natureza.codigo)}
-                      className={`p-2 rounded cursor-pointer transition-colors ${
-                        formData.naturezaFatos === natureza.codigo
-                          ? "bg-primary/20 border border-primary/50"
-                          : "hover:bg-secondary/50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="font-mono text-xs">
-                          {natureza.codigo}
-                        </Badge>
-                        <span className="text-sm">{natureza.descricao}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </Card>
-
-            {/* Artigos/Delitos */}
-            <Card className="glass-card p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-primary">
-                  <Scale className="w-5 h-5" />
-                  <h2 className="text-lg font-display font-semibold">ARTIGOS / DELITOS</h2>
-                </div>
-                {formData.artigosDelitos.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setFormData(prev => ({ ...prev, artigosDelitos: [] }))}
-                    className="text-destructive hover:text-destructive/80 hover:bg-destructive/10 h-7 px-2"
-                  >
-                    Limpar todos
-                  </Button>
-                )}
-              </div>
-              <Separator className="bg-border/50" />
-
-              {/* Selecionados */}
-              {formData.artigosDelitos.length > 0 && (
-                <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-2">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Clique para remover:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {formData.artigosDelitos.map((artigoId) => {
-                      const artigo = codigoPenal.find((a) => a.artigo === artigoId);
+                <ScrollArea className="flex-1 p-2">
+                  <div className="space-y-1">
+                    {filteredArtigos.map((artigo) => {
+                      const isSelected = formData.artigosDelitos.includes(artigo.artigo);
                       return (
-                        <Badge
-                          key={artigoId}
-                          className="bg-primary text-primary-foreground cursor-pointer hover:bg-destructive transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleArtigo(artigoId);
-                          }}
+                        <div
+                          key={artigo.artigo}
+                          onClick={() => toggleArtigo(artigo.artigo)}
+                          className={`p-3 rounded-md cursor-pointer border transition-all duration-200 group ${isSelected
+                              ? "bg-primary/10 border-primary text-foreground"
+                              : "bg-transparent border-transparent hover:bg-secondary/80 hover:border-border"
+                            }`}
                         >
-                          {artigoId} ✕
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
-                  <SelectTrigger className="input-police">
-                    <SelectValue placeholder="Filtrar por categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as categorias</SelectItem>
-                    {categoriasPenais.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    value={artigoSearch}
-                    onChange={(e) => setArtigoSearch(e.target.value)}
-                    placeholder="Buscar artigo ou tipificação..."
-                    className="input-police pl-10"
-                  />
-                </div>
-              </div>
-
-              <ScrollArea className="h-[300px] pr-4">
-                <div className="space-y-1">
-                  {filteredArtigos.map((artigo) => (
-                    <div
-                      key={artigo.artigo}
-                      className={`p-3 rounded cursor-pointer transition-colors ${
-                        formData.artigosDelitos.includes(artigo.artigo)
-                          ? "bg-primary/20 border border-primary/50"
-                          : "hover:bg-secondary/50"
-                      }`}
-                      onClick={() => toggleArtigo(artigo.artigo)}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Checkbox
-                          checked={formData.artigosDelitos.includes(artigo.artigo)}
-                          className="mt-1"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant="outline" className="font-mono text-xs shrink-0">
-                              {artigo.artigo}
-                            </Badge>
-                            <span className="text-sm font-medium">{artigo.tipificacao}</span>
-                          </div>
-                          <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
-                            <span>Pena: <span className="text-warning">{artigo.pena} meses</span></span>
-                            <span>Multa: <span className="text-success">R$ {artigo.multa}</span></span>
-                            {artigo.fiancavel && (
-                              <span>Fiança: R$ {artigo.fiancavel}</span>
-                            )}
+                          <div className="flex items-start gap-3">
+                            <Checkbox checked={isSelected} className={`mt-1 data-[state=checked]:bg-primary data-[state=checked]:border-primary`} />
+                            <div className="flex-1">
+                              <div className="flex justify-between items-start">
+                                <span className="font-bold text-sm leading-tight group-hover:text-primary transition-colors">{artigo.tipificacao}</span>
+                                <Badge variant="outline" className="font-mono text-[10px] h-5 opacity-70">{artigo.artigo}</Badge>
+                              </div>
+                              <div className="flex gap-3 mt-1.5 text-xs text-muted-foreground font-medium">
+                                <span className="text-red-400">{artigo.pena} meses</span>
+                                <span className="text-emerald-400">R$ {artigo.multa}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </Card>
-
-            {/* Totais e Copiar */}
-            <Card className="glass-card p-6 space-y-4">
-              <div className="flex items-center gap-2 text-primary">
-                <Scale className="w-5 h-5" />
-                <h2 className="text-lg font-display font-semibold">RESUMO PENAL</h2>
-              </div>
-              <Separator className="bg-border/50" />
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-warning/10 border border-warning/30 text-center">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Pena Total</p>
-                  <p className="text-2xl font-display font-bold text-warning">
-                    {totais.penaTotal} <span className="text-sm">meses</span>
-                  </p>
-                </div>
-                <div className="p-4 rounded-lg bg-success/10 border border-success/30 text-center">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Multa Total</p>
-                  <p className="text-2xl font-display font-bold text-success">
-                    R$ {formatNumber(totais.multaTotal)}
-                  </p>
-                </div>
-              </div>
-
-              <Button
-                onClick={copyToClipboard}
-                className="w-full btn-pm h-12 text-lg font-display tracking-wide"
-              >
-                {copied ? (
-                  <>
-                    <CheckCircle2 className="w-5 h-5 mr-2" />
-                    COPIADO!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-5 h-5 mr-2" />
-                    COPIAR BOLETIM
-                  </>
-                )}
-              </Button>
-            </Card>
-          </div>
-        </div>
-
-        {/* Preview */}
-        <Card className="dark-card p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-primary">
-              <FileText className="w-5 h-5" />
-              <h2 className="text-lg font-display font-semibold">PRÉ-VISUALIZAÇÃO DO BO</h2>
+                      )
+                    })}
+                  </div>
+                </ScrollArea>
+              </Card>
             </div>
-            <Button
-              onClick={copyToClipboard}
-              className="btn-pm"
-            >
-              {copied ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  COPIADO!
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4 mr-2" />
-                  COPIAR TUDO
-                </>
-              )}
-            </Button>
           </div>
-          <Separator className="bg-border/20" />
-          
-          <pre className="p-4 rounded-lg bg-black/50 text-sm whitespace-pre-wrap font-mono text-gray-200 overflow-x-auto border border-white/10">
-            {generateBO()}
-          </pre>
-        </Card>
 
-        {/* Footer */}
-        <div className="sampa-footer rounded-lg p-4 text-center">
-          <p className="text-white/80 text-sm font-medium">
-            SAMPA ROLEPLAY • Polícia Militar do Estado de São Paulo
-          </p>
         </div>
-      </div>
+
+        <Footer />
+      </main>
     </div>
   );
 };

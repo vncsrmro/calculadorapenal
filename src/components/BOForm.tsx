@@ -464,12 +464,22 @@ MULTA TOTAL: R$ ${formatNumber(totais.multaTotal)}`;
               
               {formData.naturezaFatos && (
                 <div className="p-3 rounded-lg bg-success/10 border border-success/30">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-success" />
-                    <span className="text-success font-semibold">{formData.naturezaFatos}</span>
-                    <span className="text-muted-foreground text-sm">
-                      - {getNaturezaInfo(formData.naturezaFatos)?.descricao}
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-success" />
+                      <span className="text-success font-semibold">{formData.naturezaFatos}</span>
+                      <span className="text-muted-foreground text-sm">
+                        - {getNaturezaInfo(formData.naturezaFatos)?.descricao}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleInputChange("naturezaFatos", "")}
+                      className="text-destructive hover:text-destructive/80 hover:bg-destructive/10 h-7 px-2"
+                    >
+                      ✕ Remover
+                    </Button>
                   </div>
                 </div>
               )}
@@ -526,27 +536,45 @@ MULTA TOTAL: R$ ${formatNumber(totais.multaTotal)}`;
 
             {/* Artigos/Delitos */}
             <Card className="glass-card p-6 space-y-4">
-              <div className="flex items-center gap-2 text-primary">
-                <Scale className="w-5 h-5" />
-                <h2 className="text-lg font-display font-semibold">ARTIGOS / DELITOS</h2>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-primary">
+                  <Scale className="w-5 h-5" />
+                  <h2 className="text-lg font-display font-semibold">ARTIGOS / DELITOS</h2>
+                </div>
+                {formData.artigosDelitos.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFormData(prev => ({ ...prev, artigosDelitos: [] }))}
+                    className="text-destructive hover:text-destructive/80 hover:bg-destructive/10 h-7 px-2"
+                  >
+                    Limpar todos
+                  </Button>
+                )}
               </div>
               <Separator className="bg-border/50" />
 
               {/* Selecionados */}
               {formData.artigosDelitos.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {formData.artigosDelitos.map((artigoId) => {
-                    const artigo = codigoPenal.find((a) => a.artigo === artigoId);
-                    return (
-                      <Badge
-                        key={artigoId}
-                        className="bg-primary/20 text-primary border border-primary/50 cursor-pointer hover:bg-destructive/20 hover:text-destructive hover:border-destructive/50"
-                        onClick={() => toggleArtigo(artigoId)}
-                      >
-                        {artigoId} ✕
-                      </Badge>
-                    );
-                  })}
+                <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-2">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Clique para remover:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.artigosDelitos.map((artigoId) => {
+                      const artigo = codigoPenal.find((a) => a.artigo === artigoId);
+                      return (
+                        <Badge
+                          key={artigoId}
+                          className="bg-primary text-primary-foreground cursor-pointer hover:bg-destructive transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleArtigo(artigoId);
+                          }}
+                        >
+                          {artigoId} ✕
+                        </Badge>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 

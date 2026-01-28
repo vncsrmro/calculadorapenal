@@ -85,9 +85,10 @@ const BOForm = () => {
       const matchSearch =
         n.codigo.toLowerCase().includes(naturezaSearch.toLowerCase()) ||
         n.descricao.toLowerCase().includes(naturezaSearch.toLowerCase());
-      return matchSearch;
+      const matchGrupo = selectedGrupo === "all" || n.grupo === selectedGrupo;
+      return matchSearch && matchGrupo;
     });
-  }, [naturezaSearch]);
+  }, [naturezaSearch, selectedGrupo]);
 
   // Filtrar artigos
   const filteredArtigos = useMemo(() => {
@@ -551,6 +552,21 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
                 <div className="p-4 border-b border-border/40 space-y-4">
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-muted-foreground">NATUREZA DA OCORRÊNCIA</Label>
+
+                    <Select value={selectedGrupo} onValueChange={setSelectedGrupo}>
+                      <SelectTrigger className="w-full input-pro mb-2">
+                        <SelectValue placeholder="Filtrar por grupo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os grupos</SelectItem>
+                        {gruposNatureza.map((grupo) => (
+                          <SelectItem key={grupo} value={grupo}>
+                            {grupo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -601,6 +617,21 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
 
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-muted-foreground">ARTIGOS / DELITOS</Label>
+
+                    <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
+                      <SelectTrigger className="w-full input-pro mb-2">
+                        <SelectValue placeholder="Filtrar por categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas as categorias</SelectItem>
+                        {categoriasPenais.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -622,8 +653,8 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
                           key={artigo.artigo}
                           onClick={() => toggleArtigo(artigo.artigo)}
                           className={`p-3 rounded-md cursor-pointer border transition-all duration-200 group ${isSelected
-                              ? "bg-primary/10 border-primary text-foreground"
-                              : "bg-transparent border-transparent hover:bg-secondary/80 hover:border-border"
+                            ? "bg-primary/10 border-primary text-foreground"
+                            : "bg-transparent border-transparent hover:bg-secondary/80 hover:border-border"
                             }`}
                         >
                           <div className="flex items-start gap-3">

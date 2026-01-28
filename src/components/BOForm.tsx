@@ -45,6 +45,7 @@ interface FormData {
   prefixo: string;
   data: string;
   localOcorrencia: string;
+  breveRelato: string;
   encarregado: string;
   motorista: string;
   terceiroHomem: string;
@@ -63,6 +64,7 @@ const BOForm = () => {
     prefixo: "",
     data: new Date().toLocaleDateString("pt-BR"),
     localOcorrencia: "",
+    breveRelato: "",
     encarregado: "",
     motorista: "",
     terceiroHomem: "",
@@ -562,6 +564,16 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
                       <Wand2 className={`w-3 h-3 mr-1 ${isGenerating ? 'animate-spin' : ''}`} />
                       {isGenerating ? "Gerando..." : "Gerar Modelo IA"}
                     </Button>
+                  </div>
+                  {/* Breve Relato (Optional) */}
+                  <div className="mb-4">
+                    <Label className="text-xs font-bold text-muted-foreground uppercase mb-1.5 block">Breve Relato (Opcional - Dê um norte para a IA)</Label>
+                    <Textarea
+                      value={formData.breveRelato}
+                      onChange={(e) => handleInputChange("breveRelato", e.target.value)}
+                      placeholder="Ex: Chegamos no local e o suspeito correu para o matagal, houve troca de tiros..."
+                      className="input-pro min-h-[80px] text-sm resize-none mb-4"
+                    />
                   </div>
                   <Textarea
                     value={formData.ocorrencia}

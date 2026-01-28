@@ -26,7 +26,8 @@ import {
   CheckCircle2,
   Search,
   Gavel,
-  Siren
+  Siren,
+  Wand2
 } from "lucide-react";
 import { toast } from "sonner";
 import { codigoPenal, categoriasPenais } from "@/data/codigoPenal";
@@ -49,7 +50,7 @@ interface FormData {
   quartoHomem: string;
   quintoHomem: string;
   suspeitos: Suspeito[];
-  naturezaFatos: string;
+  naturezaFatos: string[];
   artigosDelitos: string[];
   apreensao: string;
   ocorrencia: string;
@@ -66,7 +67,7 @@ const BOForm = () => {
     quartoHomem: "",
     quintoHomem: "",
     suspeitos: [{ nome: "", rg: "", caracteristicas: "" }],
-    naturezaFatos: "",
+    naturezaFatos: [],
     artigosDelitos: [],
     apreensao: "",
     ocorrencia: "",
@@ -84,10 +85,9 @@ const BOForm = () => {
       const matchSearch =
         n.codigo.toLowerCase().includes(naturezaSearch.toLowerCase()) ||
         n.descricao.toLowerCase().includes(naturezaSearch.toLowerCase());
-      const matchGrupo = selectedGrupo === "all" || n.grupo === selectedGrupo;
-      return matchSearch && matchGrupo;
+      return matchSearch;
     });
-  }, [naturezaSearch, selectedGrupo]);
+  }, [naturezaSearch]);
 
   // Filtrar artigos
   const filteredArtigos = useMemo(() => {
@@ -156,6 +156,18 @@ const BOForm = () => {
     }
   };
 
+  const toggleNatureza = (codigo: string) => {
+    setFormData((prev) => {
+      const isSelected = prev.naturezaFatos.includes(codigo);
+      return {
+        ...prev,
+        naturezaFatos: isSelected
+          ? prev.naturezaFatos.filter(n => n !== codigo)
+          : [...prev.naturezaFatos, codigo]
+      }
+    })
+  }
+
   const toggleArtigo = (artigoId: string) => {
     setFormData((prev) => {
       const isSelected = prev.artigosDelitos.includes(artigoId);
@@ -167,6 +179,17 @@ const BOForm = () => {
       };
     });
   };
+
+  const generateTemplate = () => {
+    const template = `No dia ${formData.data.slice(0, 5)}, por volta das XX:XX horas, a equipe policial em serviço foi acionada via COPOM para atendimento de ocorrência de...
+
+Ao chegarem ao local, os policiais visualizaram...
+
+Diante dos fatos, restou configurada, em tese, a prática dos crimes previstos... motivo pelo qual foi dada voz de prisão...`;
+
+    handleInputChange("ocorrencia", template);
+    toast.success("Modelo de ocorrência gerado!");
+  }
 
   const formatNumber = (num: number): string => {
     return num.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
@@ -187,6 +210,10 @@ const BOForm = () => {
       })
       .join(", ");
 
+    const naturezaString = formData.naturezaFatos.length > 0
+      ? formData.naturezaFatos.join(", ")
+      : "N/A";
+
     const bo = `BO PM/ (${formData.unidade || "UNIDADE"} - ${formData.prefixo || "PREFIXO"}) ${formData.data}
 
 ENCARREGADO: ${formData.encarregado || "N/A"}
@@ -201,11 +228,11 @@ INFORMAÇÕES DO SUSPEITO: ${caracteristicas}
 NOME DOS SUSPEITO(S): ${nomes}
 RG(S): ${rgs}
 -
-NATUREZA DOS FATOS: ${formData.naturezaFatos || "N/A"}
+NATUREZA DOS FATOS: ${naturezaString}
 ARTIGOS/DELITOS: ${artigosNumeros || "N/A"}
 
 -
- 
+
 APREENSÃO: ${formData.apreensao || "N/A"}
 
 -
@@ -300,7 +327,7 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
                     <Input
                       value={formData.prefixo}
                       onChange={(e) => handleInputChange("prefixo", e.target.value)}
-                      placeholder="Ex: 12345"
+                      placeholder="Ex: 94100"
                       className="input-pro font-mono"
                     />
                   </div>
@@ -352,6 +379,14 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
                     <Input
                       value={formData.quartoHomem}
                       onChange={(e) => handleInputChange("quartoHomem", e.target.value)}
+                      className="input-pro"
+                    />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <Label className="text-xs text-muted-foreground">5º Homem (Opcional)</Label>
+                    <Input
+                      value={formData.quintoHomem}
+                      onChange={(e) => handleInputChange("quintoHomem", e.target.value)}
                       className="input-pro"
                     />
                   </div>
@@ -415,8 +450,8 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
                         <Input
                           value={suspeito.caracteristicas}
                           onChange={(e) => handleSuspeitoChange(index, "caracteristicas", e.target.value)}
-                          placeholder="Descreva brevemente..."
-                          className="input-pro"
+                          placeholder="Homem, branco, cabelo azul, tatuagens..."
+                          className="input-pro uppercase"
                         />
                       </div>
                     </CardContent>
@@ -427,7 +462,7 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
 
             {/* 3. Text Areas */}
             <section className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Package className="w-4 h-4 text-primary" />
@@ -436,20 +471,25 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
                   <Textarea
                     value={formData.apreensao}
                     onChange={(e) => handleInputChange("apreensao", e.target.value)}
-                    placeholder="Liste itens ilícitos, armas, drogas..."
-                    className="input-pro min-h-[120px] resize-none"
+                    placeholder="Ex: 1x FIVESEVEN / 200x MUNIÇÕES..."
+                    className="input-pro min-h-[100px] resize-none uppercase"
                   />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-primary" />
-                    <h3 className="text-sm font-bold uppercase text-muted-foreground">Histórico</h3>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-primary" />
+                      <h3 className="text-sm font-bold uppercase text-muted-foreground">Histórico da Ocorrência</h3>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={generateTemplate} className="h-6 text-xs text-primary hover:text-primary/80">
+                      <Wand2 className="w-3 h-3 mr-1" /> Gerar Modelo
+                    </Button>
                   </div>
                   <Textarea
                     value={formData.ocorrencia}
                     onChange={(e) => handleInputChange("ocorrencia", e.target.value)}
-                    placeholder="Descrição detalhada dos fatos..."
-                    className="input-pro min-h-[120px] resize-none"
+                    placeholder="Descreva detalhadamente o ocorrido..."
+                    className="input-pro min-h-[200px] resize-none"
                   />
                 </div>
               </div>
@@ -507,43 +547,65 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
               </Card>
 
               {/* SEARCH AND SELECT */}
-              <Card className="glass-panel max-h-[600px] flex flex-col">
+              <Card className="glass-panel max-h-[700px] flex flex-col">
                 <div className="p-4 border-b border-border/40 space-y-4">
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-muted-foreground">NATUREZA DA OCORRÊNCIA</Label>
-                    <Select value={formData.naturezaFatos} onValueChange={(val) => handleInputChange("naturezaFatos", val)}>
-                      <SelectTrigger className="w-full input-pro">
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <div className="p-2">
-                          <Input
-                            placeholder="Filtrar..."
-                            value={naturezaSearch}
-                            onChange={(e) => setNaturezaSearch(e.target.value)}
-                            className="h-8 mb-2"
-                            autoFocus
-                          />
-                        </div>
-                        <ScrollArea className="h-[200px]">
-                          {filteredNaturezas.map((nat) => (
-                            <SelectItem key={nat.codigo} value={nat.codigo}>
-                              <span className="font-mono font-bold text-xs mr-2 text-primary">{nat.codigo}</span>
-                              {nat.descricao}
-                            </SelectItem>
-                          ))}
-                        </ScrollArea>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold text-muted-foreground">ADICIONAR ARTIGOS</Label>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         className="pl-9 input-pro"
-                        placeholder="Pesquisar crime (ex: Homicídio, Roubo)..."
+                        placeholder="Pesquisar natureza..."
+                        value={naturezaSearch}
+                        onChange={(e) => setNaturezaSearch(e.target.value)}
+                      />
+                    </div>
+                    {/* Selected Badges */}
+                    {formData.naturezaFatos.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {formData.naturezaFatos.map(codigo => {
+                          const natureza = naturezaOcorrencias.find(n => n.codigo === codigo);
+                          return (
+                            <Badge
+                              key={codigo}
+                              variant="secondary"
+                              className="cursor-pointer hover:bg-destructive hover:text-white transition-colors"
+                              onClick={() => toggleNatureza(codigo)}
+                            >
+                              {codigo} ✕
+                            </Badge>
+                          )
+                        })}
+                      </div>
+                    )}
+                    <ScrollArea className="h-[120px] rounded-md border border-input/50 bg-secondary/20 p-2">
+                      <div className="space-y-1">
+                        {filteredNaturezas.map((nat) => {
+                          const isSelected = formData.naturezaFatos.includes(nat.codigo);
+                          return (
+                            <div
+                              key={nat.codigo}
+                              className={`text-sm p-2 rounded cursor-pointer flex items-center justify-between ${isSelected ? 'bg-primary/20 text-primary' : 'hover:bg-secondary/50'}`}
+                              onClick={() => toggleNatureza(nat.codigo)}
+                            >
+                              <span>{nat.descricao}</span>
+                              <span className="font-mono text-xs opacity-70">{nat.codigo}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </ScrollArea>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-muted-foreground">ARTIGOS / DELITOS</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        className="pl-9 input-pro"
+                        placeholder="Pesquisar crime (ex: Homicídio)..."
                         value={artigoSearch}
                         onChange={(e) => setArtigoSearch(e.target.value)}
                       />

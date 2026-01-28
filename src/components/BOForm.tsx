@@ -552,7 +552,7 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileText className="w-4 h-4 text-primary" />
-                      <h3 className="text-sm font-bold uppercase text-muted-foreground">Histórico da Ocorrência</h3>
+                      <h3 className="text-sm font-bold uppercase text-muted-foreground">Relatório Final (Gerado pela IA)</h3>
                     </div>
                     <Button
                       variant="ghost"
@@ -623,16 +623,10 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
 
                   <Separator className="bg-border/50" />
 
-                  <Button
-                    className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25 transition-all active:scale-[0.98]"
-                    onClick={copyToClipboard}
-                  >
-                    {copied ? (
-                      <span className="flex items-center gap-2 animate-in fade-in zoom-in"><CheckCircle2 className="w-5 h-5" /> COPIADO</span>
-                    ) : (
-                      <span className="flex items-center gap-2"><Copy className="w-5 h-5" /> COPIAR RELATÓRIO</span>
-                    )}
-                  </Button>
+                  {/* Button Removed from here */}
+                  <div className="text-center text-xs text-muted-foreground uppercase">
+                    Preencha os dados e clique em "Gerar Modelo IA"
+                  </div>
                 </CardContent>
               </Card>
 
@@ -756,6 +750,24 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
                               <div className="flex gap-3 mt-1.5 text-xs text-muted-foreground font-medium">
                                 <span className="text-red-400">{artigo.pena} meses</span>
                                 <span className="text-emerald-400">R$ {artigo.multa}</span>
+                              </div>
+
+                              {/* BOTTOM ACTION BUTTON */}
+                              <div className="sticky bottom-4 z-40">
+                                <Card className="glass-panel border-primary/50 shadow-[0_0_50px_rgba(220,38,38,0.2)]">
+                                  <CardContent className="p-4">
+                                    <Button
+                                      className="w-full h-20 bg-primary hover:bg-primary/90 text-white font-black text-2xl shadow-xl shadow-primary/30 transition-all active:scale-[0.98] uppercase tracking-widest"
+                                      onClick={copyToClipboard}
+                                    >
+                                      {copied ? (
+                                        <span className="flex items-center justify-center gap-4 animate-in fade-in zoom-in"><CheckCircle2 className="w-8 h-8" /> RELATÓRIO COPIADO!</span>
+                                      ) : (
+                                        <span className="flex items-center justify-center gap-4"><Copy className="w-8 h-8" /> COPIAR RELATÓRIO FINAL</span>
+                                      )}
+                                    </Button>
+                                  </CardContent>
+                                </Card>
                               </div>
                             </div>
                           </div>

@@ -751,24 +751,6 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
                                 <span className="text-red-400">{artigo.pena} meses</span>
                                 <span className="text-emerald-400">R$ {artigo.multa}</span>
                               </div>
-
-                              {/* BOTTOM ACTION BUTTON */}
-                              <div className="sticky bottom-4 z-40">
-                                <Card className="glass-panel border-primary/50 shadow-[0_0_50px_rgba(220,38,38,0.2)]">
-                                  <CardContent className="p-4">
-                                    <Button
-                                      className="w-full h-20 bg-primary hover:bg-primary/90 text-white font-black text-2xl shadow-xl shadow-primary/30 transition-all active:scale-[0.98] uppercase tracking-widest"
-                                      onClick={copyToClipboard}
-                                    >
-                                      {copied ? (
-                                        <span className="flex items-center justify-center gap-4 animate-in fade-in zoom-in"><CheckCircle2 className="w-8 h-8" /> RELATÓRIO COPIADO!</span>
-                                      ) : (
-                                        <span className="flex items-center justify-center gap-4"><Copy className="w-8 h-8" /> COPIAR RELATÓRIO FINAL</span>
-                                      )}
-                                    </Button>
-                                  </CardContent>
-                                </Card>
-                              </div>
                             </div>
                           </div>
                         </div>
@@ -780,6 +762,30 @@ FIANÇA SUGERIDA: ${totais.semFianca ? "CRIME INFIANÇÁVEL" : `R$ ${formatNumbe
             </div>
           </div>
 
+        </div>
+
+        {/* BOTTOM ACTION BUTTON - FULL WIDTH */}
+        <div className="w-full max-w-4xl mx-auto pb-8">
+          <Card className="glass-panel border-primary/50 shadow-[0_0_50px_rgba(220,38,38,0.2)] hover:scale-[1.01] transition-transform duration-300">
+            <CardContent className="p-4">
+              <Button
+                className="w-full h-20 bg-primary hover:bg-primary/90 text-white font-black text-2xl shadow-xl shadow-primary/30 active:scale-[0.98] uppercase tracking-widest flex items-center justify-center gap-4"
+                onClick={copyToClipboard}
+              >
+                {copied ? (
+                  <>
+                    <CheckCircle2 className="w-8 h-8 animate-in fade-in zoom-in" />
+                    RELATÓRIO COPIADO!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-8 h-8" />
+                    COPIAR RELATÓRIO FINAL
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
         <Footer />

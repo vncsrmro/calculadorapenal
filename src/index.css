@@ -6,52 +6,54 @@
 
 @layer base {
   :root {
-    /* Dark police theme */
-    --background: 222 47% 8%;
-    --foreground: 210 40% 96%;
+    /* SAMPA RP - PM-SP Theme: Red, Black, White, Gray */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 96%;
+    --card: 0 0% 98%;
+    --card-foreground: 0 0% 10%;
 
-    --popover: 222 47% 13%;
-    --popover-foreground: 210 40% 96%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 45 93% 47%;
-    --primary-foreground: 222 47% 8%;
+    /* Vermelho PM-SP */
+    --primary: 0 85% 40%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 25% 20%;
-    --secondary-foreground: 210 40% 96%;
+    --secondary: 0 0% 92%;
+    --secondary-foreground: 0 0% 15%;
 
-    --muted: 215 25% 15%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 210 100% 45%;
-    --accent-foreground: 210 40% 98%;
+    /* Vermelho escuro */
+    --accent: 0 75% 35%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 215 25% 22%;
-    --input: 215 25% 18%;
-    --ring: 45 93% 47%;
+    --border: 0 0% 88%;
+    --input: 0 0% 94%;
+    --ring: 0 85% 40%;
 
     --radius: 0.5rem;
 
     --success: 142 76% 36%;
-    --success-foreground: 210 40% 98%;
+    --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 8%;
+    --warning-foreground: 0 0% 10%;
 
     /* Gradients */
-    --gradient-gold: linear-gradient(135deg, hsl(45, 93%, 47%) 0%, hsl(38, 92%, 50%) 100%);
-    --gradient-dark: linear-gradient(180deg, hsl(222, 47%, 11%) 0%, hsl(222, 47%, 6%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(210, 100%, 45%) 0%, hsl(210, 100%, 35%) 100%);
+    --gradient-pm: linear-gradient(135deg, hsl(0, 85%, 40%) 0%, hsl(0, 75%, 30%) 100%);
+    --gradient-header: linear-gradient(135deg, hsl(0, 0%, 10%) 0%, hsl(0, 85%, 35%) 50%, hsl(0, 0%, 95%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(0, 0%, 10%) 0%, hsl(0, 0%, 5%) 100%);
 
     /* Shadows */
-    --shadow-glow: 0 0 20px hsl(45 93% 47% / 0.15);
-    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.3);
-    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.4);
+    --shadow-glow: 0 0 20px hsl(0 85% 40% / 0.2);
+    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.08);
+    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.12);
   }
 }
 
@@ -63,7 +65,6 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
-    background: linear-gradient(180deg, hsl(222, 47%, 8%) 0%, hsl(222, 47%, 5%) 100%);
     min-height: 100vh;
   }
 
@@ -75,33 +76,47 @@
 }
 
 @layer components {
-  .police-badge {
-    background: var(--gradient-gold);
+  .pm-badge {
+    background: var(--gradient-pm);
     box-shadow: var(--shadow-glow);
   }
 
+  .pm-header {
+    background: linear-gradient(90deg, hsl(0, 0%, 10%) 0%, hsl(0, 85%, 40%) 40%, hsl(0, 0%, 95%) 100%);
+  }
+
+  .pm-stripe {
+    background: linear-gradient(90deg, hsl(0, 0%, 10%) 0%, hsl(0, 85%, 40%) 50%, hsl(0, 0%, 95%) 100%);
+    height: 4px;
+  }
+
   .glass-card {
-    background: hsl(222 47% 11% / 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid hsl(215 25% 22% / 0.5);
+    background: hsl(0 0% 100%);
+    border: 1px solid hsl(0 0% 90%);
     box-shadow: var(--shadow-card);
+  }
+
+  .dark-card {
+    background: hsl(0 0% 8%);
+    border: 1px solid hsl(0 0% 20%);
+    color: hsl(0 0% 95%);
   }
 
   .input-police {
     @apply bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200;
   }
 
-  .btn-gold {
-    background: var(--gradient-gold);
-    color: hsl(222 47% 8%);
+  .btn-pm {
+    background: var(--gradient-pm);
+    color: hsl(0 0% 100%);
     font-weight: 600;
     box-shadow: var(--shadow-glow);
     transition: all 0.2s ease;
   }
 
-  .btn-gold:hover {
+  .btn-pm:hover {
     transform: translateY(-1px);
-    box-shadow: 0 0 30px hsl(45 93% 47% / 0.25);
+    box-shadow: 0 0 30px hsl(0 85% 40% / 0.3);
   }
 
   .section-divider {
@@ -110,8 +125,12 @@
 
   .badge-military {
     @apply inline-flex items-center px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider;
-    background: hsl(215 25% 18%);
-    border: 1px solid hsl(45 93% 47% / 0.3);
-    color: hsl(45 93% 60%);
+    background: hsl(0 0% 10%);
+    border: 1px solid hsl(0 85% 40% / 0.5);
+    color: hsl(0 0% 95%);
+  }
+
+  .sampa-footer {
+    background: linear-gradient(90deg, hsl(0, 0%, 15%) 0%, hsl(0, 85%, 35%) 100%);
   }
 }

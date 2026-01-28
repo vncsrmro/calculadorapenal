@@ -228,18 +228,21 @@ MULTA TOTAL: R$ ${formatNumber(totais.multaTotal)}`;
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen p-4 md:p-8 bg-background">
+      {/* PM-SP Header Stripe */}
+      <div className="pm-stripe w-full fixed top-0 left-0 z-50" />
+      
+      <div className="max-w-7xl mx-auto space-y-6 pt-4">
         {/* Header */}
         <div className="text-center space-y-4 animate-slide-in">
-          <div className="inline-flex items-center gap-3 police-badge px-6 py-3 rounded-lg">
+          <div className="inline-flex items-center gap-3 pm-badge px-6 py-3 rounded-lg">
             <Shield className="w-8 h-8 text-primary-foreground" />
             <h1 className="text-2xl md:text-3xl font-display font-bold text-primary-foreground tracking-wide">
               BOLETIM DE OCORRÊNCIA PM
             </h1>
           </div>
-          <p className="text-muted-foreground">
-            Sistema de preenchimento de BO para FiveM Roleplay
+          <p className="text-muted-foreground font-medium">
+            SAMPA Roleplay • Sistema de Registro de Ocorrências
           </p>
         </div>
 
@@ -637,7 +640,7 @@ MULTA TOTAL: R$ ${formatNumber(totais.multaTotal)}`;
 
               <Button
                 onClick={copyToClipboard}
-                className="w-full btn-gold h-12 text-lg font-display tracking-wide"
+                className="w-full btn-pm h-12 text-lg font-display tracking-wide"
               >
                 {copied ? (
                   <>
@@ -656,17 +659,42 @@ MULTA TOTAL: R$ ${formatNumber(totais.multaTotal)}`;
         </div>
 
         {/* Preview */}
-        <Card className="glass-card p-6 space-y-4">
-          <div className="flex items-center gap-2 text-primary">
-            <FileText className="w-5 h-5" />
-            <h2 className="text-lg font-display font-semibold">PRÉ-VISUALIZAÇÃO DO BO</h2>
+        <Card className="dark-card p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-primary">
+              <FileText className="w-5 h-5" />
+              <h2 className="text-lg font-display font-semibold">PRÉ-VISUALIZAÇÃO DO BO</h2>
+            </div>
+            <Button
+              onClick={copyToClipboard}
+              className="btn-pm"
+            >
+              {copied ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  COPIADO!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 mr-2" />
+                  COPIAR TUDO
+                </>
+              )}
+            </Button>
           </div>
-          <Separator className="bg-border/50" />
+          <Separator className="bg-border/20" />
           
-          <pre className="p-4 rounded-lg bg-secondary/30 text-sm whitespace-pre-wrap font-mono text-foreground/90 overflow-x-auto">
+          <pre className="p-4 rounded-lg bg-black/50 text-sm whitespace-pre-wrap font-mono text-gray-200 overflow-x-auto border border-white/10">
             {generateBO()}
           </pre>
         </Card>
+
+        {/* Footer */}
+        <div className="sampa-footer rounded-lg p-4 text-center">
+          <p className="text-white/80 text-sm font-medium">
+            SAMPA ROLEPLAY • Polícia Militar do Estado de São Paulo
+          </p>
+        </div>
       </div>
     </div>
   );

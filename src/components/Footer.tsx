@@ -20,9 +20,9 @@ export function Footer() {
                 </div>
 
                 <DonationModal>
-                    <button className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/5 hover:bg-primary/10 border border-primary/20 hover:border-primary/40 transition-all duration-300 group cursor-pointer ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                        <Gift className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
-                        <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent font-bold group-hover:opacity-80 transition-opacity">
+                    <button className="relative flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer animate-in fade-in zoom-in">
+                        <Gift className="w-4 h-4 animate-bounce" />
+                        <span className="font-bold tracking-wide">
                             Mantenha o Projeto Online
                         </span>
                     </button>

@@ -95,15 +95,25 @@ const BOForm = () => {
     });
   }, [naturezaSearch, selectedGrupo]);
 
+  // Helper para normalizar texto (remover acentos e caracteres especiais)
+  const normalizeText = (text: string) => {
+    return text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\w\s]/gi, "")
+      .toLowerCase();
+  };
+
   // Filtrar artigos
   const filteredArtigos = useMemo(() => {
     return codigoPenal.filter((a) => {
-      const searchLower = artigoSearch.toLowerCase();
+      const searchNormalized = normalizeText(artigoSearch);
+
       const matchSearch =
-        a.artigo.toLowerCase().includes(searchLower) ||
-        a.tipificacao.toLowerCase().includes(searchLower) ||
-        a.observacoes.toLowerCase().includes(searchLower) ||
-        a.categoria.toLowerCase().includes(searchLower);
+        normalizeText(a.artigo).includes(searchNormalized) ||
+        normalizeText(a.tipificacao).includes(searchNormalized) ||
+        normalizeText(a.observacoes).includes(searchNormalized) ||
+        normalizeText(a.categoria).includes(searchNormalized);
 
       const matchCategoria = selectedCategoria === "all" || a.categoria === selectedCategoria;
       return matchSearch && matchCategoria;

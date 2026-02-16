@@ -98,9 +98,13 @@ const BOForm = () => {
   // Filtrar artigos
   const filteredArtigos = useMemo(() => {
     return codigoPenal.filter((a) => {
+      const searchLower = artigoSearch.toLowerCase();
       const matchSearch =
-        a.artigo.toLowerCase().includes(artigoSearch.toLowerCase()) ||
-        a.tipificacao.toLowerCase().includes(artigoSearch.toLowerCase());
+        a.artigo.toLowerCase().includes(searchLower) ||
+        a.tipificacao.toLowerCase().includes(searchLower) ||
+        a.observacoes.toLowerCase().includes(searchLower) ||
+        a.categoria.toLowerCase().includes(searchLower);
+
       const matchCategoria = selectedCategoria === "all" || a.categoria === selectedCategoria;
       return matchSearch && matchCategoria;
     });
